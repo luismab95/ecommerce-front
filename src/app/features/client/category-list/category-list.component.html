@@ -1,0 +1,66 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-text-main mb-4">Nuestras Categorías</h1>
+        <p class="text-text-muted text-lg max-w-2xl mx-auto">
+            Explora nuestra amplia selección de productos organizados por categorías para encontrar exactamente lo que
+            buscas.
+        </p>
+    </div>
+
+    @if (loading()) {
+    <app-loading />
+    } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        @for (category of categories(); track category.id) {
+        <a [routerLink]="['/products']" [queryParams]="{ categoryId: category.id }"
+            class="group bg-surface rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 block">
+            <div
+                class="h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center relative overflow-hidden">
+                <!-- Decorative Circle -->
+                <div
+                    class="absolute w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500">
+                </div>
+
+                <span class="text-6xl group-hover:scale-110 transition-transform duration-300 relative z-10">
+                    {{ category.name.charAt(0).toUpperCase() }}
+                </span>
+            </div>
+            <div class="p-6">
+                <h3 class="text-2xl font-bold text-text-main mb-2 group-hover:text-primary transition-colors">
+                    {{ category.name }}
+                </h3>
+                <p class="text-text-muted line-clamp-2">
+                    {{ category.description }}
+                </p>
+                <div
+                    class="mt-4 flex items-center text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                    Ver productos
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </div>
+            </div>
+        </a>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+    <div class="flex justify-center items-center space-x-2 mt-12">
+        <button (click)="changePage(currentPage() - 1)" [disabled]="!hasPreviousPage()"
+            class="px-4 py-2 bg-surface border border-border rounded-lg text-text-main disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-subtle hover:text-primary transition-colors font-medium">
+            Anterior
+        </button>
+        <span class="text-text-muted font-medium px-4">
+            Página <span class="text-text-main">{{ currentPage() }}</span> de <span class="text-text-main">{{
+                totalPages() }}</span>
+        </span>
+        <button (click)="changePage(currentPage() + 1)" [disabled]="!hasNextPage()"
+            class="px-4 py-2 bg-surface border border-border rounded-lg text-text-main disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-subtle hover:text-primary transition-colors font-medium">
+            Siguiente
+        </button>
+    </div>
+    }
+    }
+</div>

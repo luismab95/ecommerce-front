@@ -1,0 +1,107 @@
+<div class="min-h-screen">
+    <!-- Hero Section -->
+    <section class="relative bg-gradient-to-br from-primary via-secondary to-accent py-20 px-4 overflow-hidden">
+        <!-- Decorative background elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white/10 blur-[100px]"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-black/10 blur-[100px]">
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto text-center relative z-10 animate-fade-in">
+            <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-md">
+                Bienvenido a E-Shop
+            </h1>
+            <p class="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto font-light">
+                Descubre productos increíbles a precios excepcionales. Calidad y estilo en un solo lugar.
+            </p>
+            <a routerLink="/products"
+                class="inline-block px-8 py-4 bg-white text-primary font-bold text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300">
+                Explorar Productos
+            </a>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="flex items-center justify-between mb-10">
+            <h2 class="text-3xl font-bold text-text-main flex items-center gap-2">
+                <span class="text-primary">★</span> Productos Destacados
+            </h2>
+            <a routerLink="/products"
+                class="text-primary hover:text-secondary font-medium transition-colors flex items-center gap-1 group">
+                Ver todos
+                <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </a>
+        </div>
+
+        @if (loading()) {
+        <app-loading />
+        } @else {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            @for (product of featuredProducts(); track product.id) {
+            <div
+                class="bg-surface rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group flex flex-col h-full">
+                <div class="aspect-square bg-background overflow-hidden relative">
+                    @if (product.images.length > 0) {
+                    <img [src]="product.images[0].path" [alt]="product.name"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    } @else {
+                    <div class="w-full h-full flex items-center justify-center text-text-muted bg-surface-subtle">
+                        <span class="text-4xl opacity-20">📷</span>
+                    </div>
+                    }
+                    <div class="absolute top-2 right-2">
+                        <span
+                            class="px-2 py-1 bg-accent/90 text-white text-xs font-bold rounded-full backdrop-blur-sm shadow-sm">
+                            Destacado
+                        </span>
+                    </div>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <h3
+                        class="font-bold text-text-main mb-2 truncate text-lg group-hover:text-primary transition-colors">
+                        {{ product.name }}
+                    </h3>
+                    <p class="text-sm text-text-muted mb-4 line-clamp-2 flex-grow">
+                        {{ product.description }}
+                    </p>
+                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
+                        <span class="text-2xl font-bold text-primary">
+                            \${{ product.price.toFixed(2) }}
+                        </span>
+                        <a [routerLink]="['/products', product.id]"
+                            class="px-4 py-2 bg-surface-subtle text-text-main hover:bg-primary hover:text-white rounded-lg transition-all text-sm font-medium">
+                            Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </section>
+
+    <!-- Categories -->
+    <section class="bg-surface py-20 border-t border-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-text-main mb-10 text-center">Categorías Populares</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                @for (category of categories(); track category.id) {
+                <a [routerLink]="['/products']" [queryParams]="{ categoryId: category.id }"
+                    class="group p-6 bg-background rounded-2xl border border-border hover:border-primary/50 hover:shadow-xl hover:-translate-y-1 transition-all text-center flex flex-col items-center justify-center h-full">
+                    <div
+                        class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                        <span class="text-2xl font-bold">{{ category.name.charAt(0) }}</span>
+                    </div>
+                    <h3 class="font-bold text-text-main mb-2 group-hover:text-primary transition-colors">{{
+                        category.name }}</h3>
+                    <p class="text-xs text-text-muted line-clamp-2">
+                        {{ category.description }}
+                    </p>
+                </a>
+                }
+            </div>
+        </div>
+    </section>
+</div>

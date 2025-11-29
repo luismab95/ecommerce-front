@@ -1,0 +1,115 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-4xl font-bold text-text-main mb-8">Catálogo de Productos</h1>
+
+    <!-- Filters -->
+    <div class="bg-surface rounded-xl border border-border p-6 mb-8 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div>
+                <label class="block text-sm font-medium text-text-main mb-2">Buscar</label>
+                <input type="text" [formControl]="searchControl" placeholder="Buscar productos..."
+                    class="w-full px-4 py-2 bg-background border border-border rounded-lg text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-sm font-medium text-text-main mb-2">Categoría</label>
+                <select [formControl]="categoryControl"
+                    class="w-full px-4 py-2 bg-background border border-border rounded-lg text-text-main focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                    <option value="">Todas</option>
+                    @for (category of categories(); track category.id) {
+                    <option [value]="category.id">{{ category.name }}</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Price Range -->
+            <div>
+                <label class="block text-sm font-medium text-text-main mb-2">Precio Mínimo</label>
+                <input type="number" [formControl]="minPriceControl" placeholder="0"
+                    class="w-full px-4 py-2 bg-background border border-border rounded-lg text-text-main focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-text-main mb-2">Precio Máximo</label>
+                <input type="number" [formControl]="maxPriceControl" placeholder="10000"
+                    class="w-full px-4 py-2 bg-background border border-border rounded-lg text-text-main focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    @if (loading()) {
+    <app-loading />
+    } @else { @if (products().length > 0) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        @for (product of products(); track product.id) {
+        <div
+            class="bg-surface rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group flex flex-col h-full">
+            <div class="aspect-square bg-background overflow-hidden relative">
+                @if (product.images.length > 0) {
+                <img [src]="product.images[0].path" [alt]="product.name"
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                } @else {
+                <div class="w-full h-full flex items-center justify-center text-text-muted bg-surface-subtle">
+                    <span class="text-4xl opacity-20">📷</span>
+                </div>
+                }
+                @if (product.featured) {
+                <div class="absolute top-2 right-2">
+                    <span
+                        class="px-2 py-1 bg-accent/90 text-white text-xs font-bold rounded-full backdrop-blur-sm shadow-sm">
+                        Destacado
+                    </span>
+                </div>
+                }
+            </div>
+            <div class="p-5 flex flex-col flex-grow">
+                <h3 class="font-bold text-text-main mb-2 truncate text-lg group-hover:text-primary transition-colors">
+                    {{ product.name }}
+                </h3>
+                <p class="text-sm text-text-muted mb-4 line-clamp-2 flex-grow">
+                    {{ product.description }}
+                </p>
+                <div class="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
+                    <span class="text-2xl font-bold text-primary">
+                        \${{ product.price.toFixed(2) }}
+                    </span>
+                    <a [routerLink]="['/products', product.id]"
+                        class="px-4 py-2 bg-surface-subtle text-text-main hover:bg-primary hover:text-white rounded-lg transition-all text-sm font-medium">
+                        Ver Detalles
+                    </a>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+    <div class="flex justify-center items-center space-x-2 mt-8">
+        <button (click)="changePage(currentPage() - 1)" [disabled]="!hasPreviousPage()"
+            class="px-4 py-2 bg-surface border border-border rounded-lg text-text-main disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-subtle hover:text-primary transition-colors font-medium">
+            Anterior
+        </button>
+        <span class="text-text-muted font-medium px-4">
+            Página <span class="text-text-main">{{ currentPage() }}</span> de <span class="text-text-main">{{
+                totalPages() }}</span>
+        </span>
+        <button (click)="changePage(currentPage() + 1)" [disabled]="!hasNextPage()"
+            class="px-4 py-2 bg-surface border border-border rounded-lg text-text-main disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-subtle hover:text-primary transition-colors font-medium">
+            Siguiente
+        </button>
+    </div>
+    } } @else {
+    <div class="text-center py-20 bg-surface rounded-2xl border border-border border-dashed">
+        <div class="text-6xl mb-4">🔍</div>
+        <h3 class="text-xl font-bold text-text-main mb-2">No se encontraron productos</h3>
+        <p class="text-text-muted">Intenta ajustar tus filtros de búsqueda</p>
+        <button (click)="searchControl.setValue(''); categoryControl.setValue('')"
+            class="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            Limpiar filtros
+        </button>
+    </div>
+    } }
+</div>
