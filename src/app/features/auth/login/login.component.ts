@@ -15,6 +15,7 @@ import { LoginRequest } from '../../../core/models/models';
 export class LoginComponent {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+  showPassword = signal(false);
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);

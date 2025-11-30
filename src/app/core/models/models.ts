@@ -1,3 +1,9 @@
+// Validation request
+export interface ValidationError {
+  field: string;
+  errors: string[];
+}
+
 // User Roles
 export enum UserRole {
   CLIENTE = 'Cliente',

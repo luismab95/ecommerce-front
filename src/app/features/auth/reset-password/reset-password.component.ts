@@ -23,6 +23,8 @@ export class ResetPasswordComponent {
   token = signal<string | null>(null);
   email = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);

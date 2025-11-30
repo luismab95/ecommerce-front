@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError, switchMap, BehaviorSubject, filter, take, Observable } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
+import { ValidationError } from '../models/models';
 
 let isRefreshing = false;
 let refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
@@ -104,34 +105,17 @@ function handleOtherErrors(
     errorMessage = `Error de red: ${error.error.message}`;
   } else {
     // Backend error
-    switch (error.status) {
-      case 0:
-        errorMessage = 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
-        break;
-      case 401:
-        errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
-        break;
-      case 403:
-        errorMessage = 'No tienes permisos para realizar esta acción.';
-        break;
-      case 404:
-        errorMessage = 'Recurso no encontrado.';
-        break;
-      case 500:
-        errorMessage = 'Error interno del servidor. Por favor, intenta más tarde.';
-        break;
-      case 503:
-        errorMessage = 'Servicio no disponible. Por favor, intenta más tarde.';
-        break;
-      default:
-        // Try to get error message from backend response
-        if (error.error?.message) {
-          errorMessage = error.error.message;
-        } else if (error.message) {
-          errorMessage = error.message;
-        } else {
-          errorMessage = `Error ${error.status}: ${error.statusText}`;
-        }
+    // Try to get error message from backend response
+    if (error.status === 422) {
+      errorMessage = error.error.data
+        .map((error: ValidationError) => error.errors.join(', '))
+        .join(', ');
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = `Error ${error.status}: ${error.statusText}`;
     }
   }
 

@@ -60,6 +60,10 @@ export class ForgotPasswordComponent {
           this.loading.set(false);
         }, 3000);
       },
+      error: () => {
+        this.loading.set(false);
+        this.successMessage.set(null);
+      },
     });
   }
 }
