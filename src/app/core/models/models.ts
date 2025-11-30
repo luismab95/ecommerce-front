@@ -19,6 +19,8 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  shippingAddress?: Address;
+  billingAddress?: Address;
 }
 
 // Auth Interfaces
@@ -232,16 +234,7 @@ export interface Wishlist {
   totalItems: number;
 }
 
-// User Profile Interfaces
-export interface UserProfile extends User {
-  shippingAddress?: Address;
-  billingAddress?: Address;
-}
-
-export interface UpdateUserProfileRequest {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  shippingAddress?: Address;
-  billingAddress?: Address;
+export interface UpdateUserAddressRequest {
+  shippingAddress: Address;
+  billingAddress: Address;
 }

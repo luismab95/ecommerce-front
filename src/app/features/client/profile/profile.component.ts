@@ -1,8 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { UserProfile } from '../../../core/models/models';
+import { Address, User } from '../../../core/models/models';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-profile',
@@ -13,66 +15,61 @@ export class ProfileComponent implements OnInit {
   activeTab = signal<'personal' | 'shipping' | 'billing'>('personal');
   loading = signal(false);
   saving = signal(false);
-  profile = signal<UserProfile | null>(null);
-
-  personalForm!: FormGroup;
-  shippingForm!: FormGroup;
-  billingForm!: FormGroup;
+  currentUser = signal<User | null>(null);
+  profile = signal<User | null>(null);
   sameAsShipping = signal(false);
 
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
+  private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
 
-  constructor() {
-    this.initializeForms();
-  }
+  personalForm = this.fb.group({
+    firstName: ['', [Validators.required, Validators.minLength(2)]],
+    lastName: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  shippingForm = this.fb.group({
+    street: ['', Validators.required],
+    city: ['', Validators.required],
+    state: ['', Validators.required],
+    zipCode: ['', Validators.required],
+    country: ['', Validators.required],
+  });
+
+  billingForm = this.fb.group({
+    street: ['', Validators.required],
+    city: ['', Validators.required],
+    state: ['', Validators.required],
+    zipCode: ['', Validators.required],
+    country: ['', Validators.required],
+  });
 
   ngOnInit(): void {
+    this.currentUser.set(this.authService.getUser());
     this.loadProfile();
-  }
-
-  initializeForms(): void {
-    this.personalForm = this.fb.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-    });
-
-    this.shippingForm = this.fb.group({
-      street: ['', Validators.required],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
-      zipCode: ['', Validators.required],
-      country: ['', Validators.required],
-    });
-
-    this.billingForm = this.fb.group({
-      street: ['', Validators.required],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
-      zipCode: ['', Validators.required],
-      country: ['', Validators.required],
-    });
   }
 
   loadProfile(): void {
     this.loading.set(true);
-    this.userService.getUserProfile().subscribe({
-      next: (response) => {
-        this.profile.set(response.data);
-        this.populateForms(response.data);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading profile:', error);
-        this.notificationService.showError('Error al cargar el perfil');
-        this.loading.set(false);
-      },
-    });
+    this.userService
+      .getUserById(this.currentUser()?.id!)
+      .pipe(
+        finalize(() => {
+          this.loading.set(false);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.profile.set(response.data);
+          this.authService.updateUser(response.data);
+          this.populateForms(response.data);
+        },
+      });
   }
 
-  populateForms(profile: UserProfile): void {
+  populateForms(profile: User): void {
     this.personalForm.patchValue({
       firstName: profile.firstName,
       lastName: profile.lastName,
@@ -108,18 +105,19 @@ export class ProfileComponent implements OnInit {
     }
 
     this.saving.set(true);
-    this.userService.updateUserProfile(this.personalForm.value).subscribe({
-      next: (response) => {
-        this.profile.set(response.data);
-        this.notificationService.showSuccess(response.message);
-        this.saving.set(false);
-      },
-      error: (error) => {
-        console.error('Error updating profile:', error);
-        this.notificationService.showError('Error al actualizar el perfil');
-        this.saving.set(false);
-      },
-    });
+    this.userService
+      .updateUserProfile(this.currentUser()?.id!, this.personalForm.value as Partial<User>)
+      .pipe(
+        finalize(() => {
+          this.saving.set(false);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.loadProfile();
+          this.notificationService.showSuccess(response.data);
+        },
+      });
   }
 
   saveShippingAddress(): void {
@@ -128,23 +126,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    this.saving.set(true);
-    this.userService
-      .updateUserProfile({
-        shippingAddress: this.shippingForm.value,
-      })
-      .subscribe({
-        next: (response) => {
-          this.profile.set(response.data);
-          this.notificationService.showSuccess(response.message);
-          this.saving.set(false);
-        },
-        error: (error) => {
-          console.error('Error updating shipping address:', error);
-          this.notificationService.showError('Error al actualizar la dirección de envío');
-          this.saving.set(false);
-        },
-      });
+    this.updaterUserAddress();
   }
 
   saveBillingAddress(): void {
@@ -153,21 +135,25 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    this.updaterUserAddress();
+  }
+
+  updaterUserAddress(): void {
     this.saving.set(true);
     this.userService
-      .updateUserProfile({
-        billingAddress: this.billingForm.value,
+      .updateUserAddress(this.currentUser()?.id!, {
+        billingAddress: this.billingForm.value as Address,
+        shippingAddress: this.shippingForm.value as Address,
       })
+      .pipe(
+        finalize(() => {
+          this.saving.set(false);
+        })
+      )
       .subscribe({
         next: (response) => {
-          this.profile.set(response.data);
-          this.notificationService.showSuccess(response.message);
-          this.saving.set(false);
-        },
-        error: (error) => {
-          console.error('Error updating billing address:', error);
-          this.notificationService.showError('Error al actualizar la dirección de facturación');
-          this.saving.set(false);
+          this.loadProfile();
+          this.notificationService.showSuccess(response.data);
         },
       });
   }

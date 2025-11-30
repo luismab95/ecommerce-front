@@ -123,4 +123,13 @@ export class AuthService {
   getToken(): string | null {
     return this.tokenSignal();
   }
+
+  getUser(): User | null {
+    return this.currentUserSignal();
+  }
+
+  updateUser(user: User): void {
+    this.currentUserSignal.set(user);
+    this.saveToStorage(user, this.tokenSignal()!);
+  }
 }
