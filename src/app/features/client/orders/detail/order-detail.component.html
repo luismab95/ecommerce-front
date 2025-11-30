@@ -1,0 +1,223 @@
+<div class="min-h-screen bg-background py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a routerLink="/"
+                        class="inline-flex items-center text-sm font-medium text-text-muted hover:text-primary transition-colors duration-300">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+                            </path>
+                        </svg>
+                        Inicio
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-text-muted" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <a routerLink="/orders"
+                            class="ml-1 text-sm font-medium text-text-muted hover:text-primary md:ml-2 transition-colors duration-300">Mis
+                            Pedidos</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-text-muted" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-text-main md:ml-2">Pedido #{{ order()?.id }}</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Loading State -->
+        @if (loading()) {
+        <div class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        }
+
+        <!-- Order Detail -->
+        @else if (order()) {
+        <div class="space-y-6">
+            <!-- Header -->
+            <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-text-main mb-2">Pedido #{{ order()!.id }}</h1>
+                        <span [ngClass]="getStatusClass(order()!.status)"
+                            class="px-3 py-1.5 text-sm font-semibold rounded-full flex items-center gap-2 w-fit mb-2">
+                            {{ getStatusIcon(order()!.status) }}
+                            {{ order()!.status }}
+                        </span>
+                        <p class="text-text-muted">Realizado el {{ formatDate(order()!.createdAt) }}</p>
+                    </div>
+                    @if (order()!.status === OrderStatus.PENDING) {
+                    <div class="flex items-center gap-4">
+                        <button (click)="openCancelModal()"
+                            class="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2">
+
+                            Cancelar Pedido
+                        </button>
+                    </div>
+                    }
+                </div>
+
+
+
+
+
+            </div>
+
+
+            <!-- Status Timeline -->
+            @if (order()!.status !== OrderStatus.CANCELLED) {
+            <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                <h2 class="text-xl font-bold text-text-main mb-6">Estado del Pedido</h2>
+                <div class="flex justify-between items-center relative">
+                    <!-- Progress Line -->
+                    <div class="absolute top-5 left-0 right-0 h-1 bg-border" style="z-index: 0"></div>
+                    <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                        [style.width]="getProgressWidth()" style="z-index: 0"></div>
+
+                    <!-- Steps -->
+                    @for (step of getStatusSteps(); track step.status) {
+                    <div class="flex flex-col items-center relative" style="z-index: 1">
+                        <div [class]="
+                      'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ' +
+                      (step.completed
+                        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+                        : 'bg-surface-subtle text-text-muted border-2 border-border')
+                    ">
+                            {{ getStatusIcon(step.status) }}
+                        </div>
+                        <p [class]="
+                      'mt-2 text-xs font-medium text-center ' + (step.completed ? 'text-text-main' : 'text-text-muted')
+                    ">
+                            {{ step.label }}
+                        </p>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Order Items -->
+            <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                <h2 class="text-xl font-bold text-text-main mb-6">Artículos del Pedido</h2>
+                <div class="space-y-4">
+                    @for (item of order()!.items; track item.productId) {
+                    <div class="flex items-center justify-between p-4 bg-surface-subtle rounded-lg">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-text-main">{{ item.productName }}</h3>
+                            <p class="text-text-muted text-sm">Cantidad: {{ item.quantity }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-text-main">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                            <p class="text-text-muted text-sm">${{ item.price.toFixed(2) }} c/u</p>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Addresses and Payment -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Shipping Address -->
+                <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                    <h2 class="text-xl font-bold text-text-main mb-4 flex items-center gap-2">
+                        <span>🚚</span>
+                        <span>Dirección de Envío</span>
+                    </h2>
+                    <div class="text-text-muted space-y-1">
+                        <p>{{ order()!.shippingAddress.street }}</p>
+                        <p>{{ order()!.shippingAddress.city }}, {{ order()!.shippingAddress.state }}</p>
+                        <p>{{ order()!.shippingAddress.zipCode }}</p>
+                        <p>{{ order()!.shippingAddress.country }}</p>
+                    </div>
+                </div>
+
+                <!-- Billing Address -->
+                <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                    <h2 class="text-xl font-bold text-text-main mb-4 flex items-center gap-2">
+                        <span>📄</span>
+                        <span>Dirección de Facturación</span>
+                    </h2>
+                    <div class="text-text-muted space-y-1">
+                        <p>{{ order()!.billingAddress.street }}</p>
+                        <p>{{ order()!.billingAddress.city }}, {{ order()!.billingAddress.state }}</p>
+                        <p>{{ order()!.billingAddress.zipCode }}</p>
+                        <p>{{ order()!.billingAddress.country }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                <h2 class="text-xl font-bold text-text-main mb-4 flex items-center gap-2">
+                    <span>💳</span>
+                    <span>Información de Pago</span>
+                </h2>
+                <div class="text-text-muted">
+                    <p class="font-semibold">{{ order()!.paymentInfo.method }}</p>
+                    @if (order()!.paymentInfo.cardHolderName) {
+                    <p>{{ order()!.paymentInfo.cardHolderName }}</p>
+                    }
+                    @if (order()!.paymentInfo.cardLastFour) {
+                    <p>**** **** **** {{ order()!.paymentInfo.cardLastFour }}</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
+                <h2 class="text-xl font-bold text-text-main mb-6">Resumen del Pedido</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-text-muted">
+                        <span>Subtotal</span>
+                        <span>${{ order()!.subtotal.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex justify-between text-text-muted">
+                        <span>Impuestos</span>
+                        <span>${{ order()!.tax.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex justify-between text-text-muted">
+                        <span>Envío</span>
+                        <span>${{ order()!.shippingCost.toFixed(2) }}</span>
+                    </div>
+                    <div class="border-t border-border pt-3 mt-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xl font-bold text-text-main">Total</span>
+                            <span
+                                class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                ${{ order()!.totalPrice.toFixed(2) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Cancel Confirmation Modal -->
+    @if (showCancelModal()) {
+    <app-confirm-modal title="Cancelar Pedido"
+        message="¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer." type="danger"
+        confirmText="Sí, Cancelar" cancelTex=" No, Mantener" (onConfirm)="confirmCancelOrder()"
+        (onCancel)="closeCancelModal()">
+    </app-confirm-modal>
+    }
+</div>

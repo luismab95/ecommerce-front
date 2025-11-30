@@ -18,14 +18,14 @@ export const routes: Routes = [
       {
         path: 'products',
         loadComponent: () =>
-          import('./features/client/products/product-catalog.component').then(
+          import('./features/client/products/list/product-catalog.component').then(
             (m) => m.ProductCatalogComponent
           ),
       },
       {
         path: 'products/:id',
         loadComponent: () =>
-          import('./features/client/product-detail/product-detail.component').then(
+          import('./features/client/products/detail/product-detail.component').then(
             (m) => m.ProductDetailComponent
           ),
       },
@@ -35,6 +35,45 @@ export const routes: Routes = [
           import('./features/client/category-list/category-list.component').then(
             (m) => m.CategoryListComponent
           ),
+      },
+      {
+        path: 'cart',
+        loadComponent: () =>
+          import('./features/client/cart/cart.component').then((m) => m.CartComponent),
+      },
+      {
+        path: 'checkout',
+        loadComponent: () =>
+          import('./features/client/checkout/checkout.component').then((m) => m.CheckoutComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/client/orders/list/order-list.component').then(
+            (m) => m.OrderListComponent
+          ),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./features/client/orders/detail/order-detail.component').then(
+            (m) => m.OrderDetailComponent
+          ),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/client/profile/profile.component').then((m) => m.ProfileComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'wishlist',
+        loadComponent: () =>
+          import('./features/client/wishlist/wishlist.component').then((m) => m.WishlistComponent),
+        canActivate: [authGuard],
       },
     ],
   },

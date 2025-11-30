@@ -1,22 +1,21 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ConfirmType } from '../../../core/models/models';
 import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-confirm-modal',
-  standalone: true,
-  imports: [NgClass],
   templateUrl: './confirm-modal.component.html',
+  imports: [NgClass],
 })
 export class ConfirmModalComponent {
-  @Input() title: string = 'Confirmar acción';
-  @Input() message: string = '¿Estás seguro de realizar esta acción?';
-  @Input() type: ConfirmType = 'danger';
-  @Input() confirmText: string = 'Confirmar';
-  @Input() cancelText: string = 'Cancelar';
+  title = input<string>('Confirmar acción');
+  message = input<string>('¿Estás seguro de realizar esta acción?');
+  type = input<ConfirmType>('danger');
+  confirmText = input<string>('Confirmar');
+  cancelText = input<string>('Cancelar');
 
-  @Output() onConfirm = new EventEmitter<void>();
-  @Output() onCancel = new EventEmitter<void>();
+  onConfirm = output<void>();
+  onCancel = output<void>();
 
   confirm() {
     this.onConfirm.emit();

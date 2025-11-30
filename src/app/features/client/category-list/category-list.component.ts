@@ -1,15 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
-import { finalize } from 'rxjs/operators';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-category-list',
-  standalone: true,
-  imports: [CommonModule, RouterLink, LoadingComponent],
+  imports: [RouterLink, LoadingComponent, PaginationComponent],
   templateUrl: './category-list.component.html',
   styles: [],
 })

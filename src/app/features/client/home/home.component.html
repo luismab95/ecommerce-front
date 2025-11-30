@@ -40,43 +40,7 @@
         } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             @for (product of featuredProducts(); track product.id) {
-            <div
-                class="bg-surface rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group flex flex-col h-full">
-                <div class="aspect-square bg-background overflow-hidden relative">
-                    @if (product.images.length > 0) {
-                    <img [src]="product.images[0].path" [alt]="product.name"
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    } @else {
-                    <div class="w-full h-full flex items-center justify-center text-text-muted bg-surface-subtle">
-                        <span class="text-4xl opacity-20">📷</span>
-                    </div>
-                    }
-                    <div class="absolute top-2 right-2">
-                        <span
-                            class="px-2 py-1 bg-accent/90 text-white text-xs font-bold rounded-full backdrop-blur-sm shadow-sm">
-                            Destacado
-                        </span>
-                    </div>
-                </div>
-                <div class="p-5 flex flex-col flex-grow">
-                    <h3
-                        class="font-bold text-text-main mb-2 truncate text-lg group-hover:text-primary transition-colors">
-                        {{ product.name }}
-                    </h3>
-                    <p class="text-sm text-text-muted mb-4 line-clamp-2 flex-grow">
-                        {{ product.description }}
-                    </p>
-                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
-                        <span class="text-2xl font-bold text-primary">
-                            \${{ product.price.toFixed(2) }}
-                        </span>
-                        <a [routerLink]="['/products', product.id]"
-                            class="px-4 py-2 bg-surface-subtle text-text-main hover:bg-primary hover:text-white rounded-lg transition-all text-sm font-medium">
-                            Ver Detalles
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <app-product-card [product]="product" [showFeaturedBadge]="true" (addToCartClick)="onAddToCart($event)" />
             }
         </div>
         }

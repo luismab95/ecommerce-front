@@ -139,3 +139,109 @@ export interface GeneralResponse<T> {
   data: T;
   message: string;
 }
+
+// Cart Interfaces
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface Cart {
+  items: CartItem[];
+  totalItems: number;
+  totalPrice: number;
+}
+
+// Address Interface
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+// Payment Interfaces
+export enum PaymentMethod {
+  CREDIT_CARD = 'Credit Card',
+  DEBIT_CARD = 'Debit Card',
+  PAYPAL = 'PayPal',
+  BANK_TRANSFER = 'Bank Transfer',
+}
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  cardHolderName?: string;
+  cardLastFour?: string;
+}
+
+// Order Interfaces
+export enum OrderStatus {
+  PENDING = 'Pending',
+  PROCESSING = 'Processing',
+  SHIPPED = 'Shipped',
+  DELIVERED = 'Delivered',
+  CANCELLED = 'Cancelled',
+}
+
+export interface OrderItem {
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  items: OrderItem[];
+  billingAddress: Address;
+  shippingAddress: Address;
+  paymentInfo: PaymentInfo;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  totalPrice: number;
+  status: OrderStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateOrderRequest {
+  items: {
+    productId: number;
+    quantity: number;
+  }[];
+  billingAddress: Address;
+  shippingAddress: Address;
+  paymentInfo: PaymentInfo;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  totalPrice: number;
+}
+
+// Wishlist Interfaces
+export interface WishlistItem {
+  product: Product;
+  addedAt: Date;
+}
+
+export interface Wishlist {
+  items: WishlistItem[];
+  totalItems: number;
+}
+
+// User Profile Interfaces
+export interface UserProfile extends User {
+  shippingAddress?: Address;
+  billingAddress?: Address;
+}
+
+export interface UpdateUserProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  shippingAddress?: Address;
+  billingAddress?: Address;
+}

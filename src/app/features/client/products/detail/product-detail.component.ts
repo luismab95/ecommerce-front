@@ -1,9 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { ProductService } from '../../../core/services/product.service';
-import { Product } from '../../../core/models/models';
-import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { Product } from '../../../../core/models/models';
+import { CartService } from '../../../../core/services/cart.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { WishlistService } from '../../../../core/services/wishlist.service';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-product-detail',
@@ -21,6 +24,9 @@ export class ProductDetailComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  private notificationService = inject(NotificationService);
+  private wishlistService = inject(WishlistService);
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
@@ -67,8 +73,28 @@ export class ProductDetailComponent implements OnInit {
   }
 
   addToCart() {
-    // Placeholder for cart functionality
-    console.log('Added to cart:', this.product());
-    alert('Producto añadido al carrito (Simulación)');
+    const product = this.product();
+    if (product) {
+      this.cartService.addToCart(product, 1);
+      this.notificationService.show(`${product.name} agregado al carrito`, 'success');
+    }
+  }
+
+  toggleWishlist() {
+    const product = this.product();
+    if (product) {
+      if (this.wishlistService.isInWishlist(product.id)) {
+        this.wishlistService.removeFromWishlist(product.id);
+        this.notificationService.showInfo('Producto eliminado de la lista de deseados');
+      } else {
+        this.wishlistService.addToWishlist(product);
+        this.notificationService.showSuccess('Producto agregado a la lista de deseados');
+      }
+    }
+  }
+
+  isInWishlist(): boolean {
+    const product = this.product();
+    return product ? this.wishlistService.isInWishlist(product.id) : false;
   }
 }

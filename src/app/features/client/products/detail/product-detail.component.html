@@ -3,6 +3,7 @@
     <app-loading />
     } @else if (product()) {
     <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-8">
             <!-- Product Images -->
             <div class="p-8 bg-surface-subtle flex flex-col items-center justify-center">
@@ -35,6 +36,7 @@
                 }
             </div>
 
+
             <!-- Product Details -->
             <div class="p-8 lg:p-12 flex flex-col">
                 <div class="mb-auto">
@@ -48,10 +50,23 @@
                         <span class="text-sm text-text-muted">ID: {{ product()?.id }}</span>
                     </div>
 
-                    <h1 class="text-4xl font-bold text-text-main mb-4">{{ product()?.name }}</h1>
+                    <div class="flex items-center justify-between mb-4">
+                        <h1 class="text-4xl font-bold text-text-main truncate">{{ product()?.name }}</h1>
+                        <button (click)="toggleWishlist()"
+                            class="px-3 py-3 bg-surface border border-border text-text-main rounded-xl hover:bg-surface-subtle transition-all flex items-center justify-center group"
+                            [title]="isInWishlist() ? 'Eliminar de deseados' : 'Agregar a deseados'">
+                            <svg class="w-6 h-6 transition-colors duration-200" [class.text-red-500]="isInWishlist()"
+                                [class.fill-current]="isInWishlist()" [class.text-text-muted]="!isInWishlist()"
+                                [class.group-hover:text-red-500]="!isInWishlist()" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <div class="flex items-baseline gap-4 mb-6">
-                        <span class="text-3xl font-bold text-primary">\${{ product()?.price?.toFixed(2) }}</span>
+                        <span class="text-3xl font-bold text-primary">${{ product()?.price?.toFixed(2) }}</span>
                         @if (product()?.stock ?? 0 > 0) {
                         <span class="text-sm text-green-600 font-medium bg-green-100 px-2 py-1 rounded-full">
                             Disponible ({{ product()?.stock }})
@@ -98,6 +113,8 @@
                         </svg>
                         Añadir al Carrito
                     </button>
+
+
                     <a routerLink="/products"
                         class="px-8 py-4 bg-surface border border-border text-text-main text-lg font-bold rounded-xl hover:bg-surface-subtle transition-all flex items-center justify-center">
                         Volver al Catálogo
