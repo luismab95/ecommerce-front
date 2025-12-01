@@ -1,28 +1,33 @@
-import { Component, signal } from '@angular/core';
-
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { CartService } from '../../../core/services/cart.service';
+import { WishlistService } from '../../../core/services/wishlist.service';
 
 @Component({
   selector: 'app-navbar',
-  standalone: true,
-  imports: [RouterLink],
   templateUrl: './navbar.component.html',
-  styles: [],
+  imports: [RouterLink],
 })
 export class NavbarComponent {
   mobileMenuOpen = signal(false);
+  userMenuOpen = signal(false);
 
-  constructor(
-    public authService: AuthService,
-    public themeService: ThemeService,
-    public modalService: AuthModalService
-  ) {}
+  public authService = inject(AuthService);
+  public themeService = inject(ThemeService);
+  public modalService = inject(AuthModalService);
+  public cartService = inject(CartService);
+  public wishlistService = inject(WishlistService);
 
   logout(): void {
     this.authService.logout().subscribe();
+    this.userMenuOpen.set(false);
+  }
+
+  toggleUserMenu(): void {
+    this.userMenuOpen.set(!this.userMenuOpen());
   }
 
   openLoginModal(): void {

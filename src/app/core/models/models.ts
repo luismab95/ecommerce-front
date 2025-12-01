@@ -1,3 +1,9 @@
+// Validation request
+export interface ValidationError {
+  field: string;
+  errors: string[];
+}
+
 // User Roles
 export enum UserRole {
   CLIENTE = 'Cliente',
@@ -13,6 +19,9 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  useSameAddressForBilling?: boolean;
+  shippingAddress?: Address;
+  billingAddress?: Address;
 }
 
 // Auth Interfaces
@@ -132,4 +141,90 @@ export type ConfirmType = 'danger' | 'warning' | 'info';
 export interface GeneralResponse<T> {
   data: T;
   message: string;
+}
+
+// Cart Interfaces
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface Cart {
+  items: CartItem[];
+  totalItems: number;
+  totalPrice: number;
+}
+
+// Address Interface
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  code: string;
+  country: string;
+}
+
+// Payment Interfaces
+export enum PaymentMethod {
+  CREDIT_CARD = 'Credit Card',
+  DEBIT_CARD = 'Debit Card',
+  PAYPAL = 'PayPal',
+  BANK_TRANSFER = 'Bank Transfer',
+}
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  cardHolderName?: string;
+  cardLastFour?: string;
+}
+
+// Order Interfaces
+export enum OrderStatus {
+  PENDING = 'Pending',
+  PROCESSING = 'Processing',
+  SHIPPED = 'Shipped',
+  DELIVERED = 'Delivered',
+  CANCELLED = 'Cancelled',
+}
+
+export interface OrderItem {
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  items: OrderItem[];
+  billingAddress: Address;
+  shippingAddress: Address;
+  paymentInfo: PaymentInfo;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  totalPrice: number;
+  status: OrderStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateOrderRequest {
+  items: {
+    productId: number;
+    quantity: number;
+  }[];
+  billingAddress: Address;
+  shippingAddress: Address;
+  paymentInfo: PaymentInfo;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  totalPrice: number;
+}
+
+export interface UpdateUserAddressRequest {
+  shippingAddress: Address;
+  billingAddress: Address;
 }

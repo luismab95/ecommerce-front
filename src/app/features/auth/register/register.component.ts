@@ -16,6 +16,7 @@ export class RegisterComponent {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  showPassword = signal(false);
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);

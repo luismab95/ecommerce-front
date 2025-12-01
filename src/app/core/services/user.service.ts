@@ -1,7 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User, PaginationParams, PaginatedResponse, GeneralResponse } from '../models/models';
+import { tap } from 'rxjs/operators';
+import {
+  User,
+  PaginationParams,
+  PaginatedResponse,
+  GeneralResponse,
+  UpdateUserAddressRequest,
+} from '../models/models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -50,5 +57,18 @@ export class UserService {
   // Delete user (Admin only)
   deleteUser(id: number): Observable<GeneralResponse<string>> {
     return this.http.delete<GeneralResponse<string>>(`${this.apiUrl}/users/${id}`);
+  }
+
+  // Update user profile
+  updateUserProfile(id: number, request: Partial<User>): Observable<GeneralResponse<string>> {
+    return this.http.put<GeneralResponse<string>>(`${this.apiUrl}/users/profile/${id}`, request);
+  }
+
+  // Update user address
+  updateUserAddress(
+    id: number,
+    request: UpdateUserAddressRequest
+  ): Observable<GeneralResponse<string>> {
+    return this.http.put<GeneralResponse<string>>(`${this.apiUrl}/users/address/${id}`, request);
   }
 }
