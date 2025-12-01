@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { Product } from '../../../../core/models/models';
+import { Product, User } from '../../../../core/models/models';
 import { CartService } from '../../../../core/services/cart.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ProductService } from '../../../../core/services/product.service';
 import { WishlistService } from '../../../../core/services/wishlist.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -17,6 +18,7 @@ export class ProductDetailComponent implements OnInit {
   product = signal<Product | undefined>(undefined);
   loading = signal(true);
   selectedImage = signal<string>('');
+  currentUser = signal<User | null>(null);
 
   // Zoom functionality signals
   isZoomed = signal(false);
@@ -27,8 +29,10 @@ export class ProductDetailComponent implements OnInit {
   private cartService = inject(CartService);
   private notificationService = inject(NotificationService);
   private wishlistService = inject(WishlistService);
+  public authService = inject(AuthService);
 
   ngOnInit() {
+    this.currentUser.set(this.authService.currentUser());
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) {
@@ -81,16 +85,15 @@ export class ProductDetailComponent implements OnInit {
   }
 
   toggleWishlist() {
-    const product = this.product();
-    if (product) {
-      if (this.wishlistService.isInWishlist(product.id)) {
-        this.wishlistService.removeFromWishlist(product.id);
-        this.notificationService.showInfo('Producto eliminado de la lista de deseados');
-      } else {
-        this.wishlistService.addToWishlist(product);
-        this.notificationService.showSuccess('Producto agregado a la lista de deseados');
-      }
-    }
+    this.loading.set(true);
+    this.wishlistService
+      .toggleWishlist(this.product()?.id!, this.currentUser()?.id!)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.notificationService.showSuccess(response.data);
+        },
+      });
   }
 
   isInWishlist(): boolean {

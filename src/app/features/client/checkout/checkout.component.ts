@@ -7,23 +7,58 @@ import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { TaxService } from '../../../core/services/tax.service';
-import { CreateOrderRequest, PaymentMethod } from '../../../core/models/models';
+import { Address, CreateOrderRequest, PaymentMethod, User } from '../../../core/models/models';
+import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-checkout',
-  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './checkout.component.html',
+  imports: [RouterLink, ReactiveFormsModule],
 })
 export class CheckoutComponent implements OnInit {
   cartService = inject(CartService);
+
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
   private orderService = inject(OrderService);
   private notificationService = inject(NotificationService);
   private taxService = inject(TaxService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
+  // Billing Address Form
+  billingAddressForm = this.fb.group({
+    street: ['', [Validators.required, Validators.minLength(5)]],
+    city: ['', [Validators.required, Validators.minLength(2)]],
+    state: ['', [Validators.required, Validators.minLength(2)]],
+    code: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
+    country: ['', [Validators.required]],
+  });
+
+  // Forms
+
+  // Shipping Address Form
+  shippingAddressForm = this.fb.group({
+    street: ['', [Validators.required, Validators.minLength(5)]],
+    city: ['', [Validators.required, Validators.minLength(2)]],
+    state: ['', [Validators.required, Validators.minLength(2)]],
+    code: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
+    country: ['', [Validators.required]],
+  });
+
+  // Payment Form
+  paymentForm = this.fb.group({
+    cardHolderName: ['', [Validators.required, Validators.minLength(3)]],
+    cardNumber: ['', [Validators.required, Validators.pattern(/^\d{13,19}$/)]],
+    expiryDate: ['', [Validators.required, Validators.pattern(/^(0[1-9]|1[0-2])\/\d{2}$/)]],
+    cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
+  });
+
   isProcessing = signal(false);
   sameAsBilling = signal(false);
+  currentUser = signal<User | null>(null);
+  profile = signal<User | null>(null);
 
   // Price calculations
   subtotal = signal(0);
@@ -35,11 +70,6 @@ export class CheckoutComponent implements OnInit {
   paymentMethods = Object.values(PaymentMethod);
   selectedPaymentMethod = signal<PaymentMethod>(PaymentMethod.CREDIT_CARD);
 
-  // Forms
-  billingAddressForm!: FormGroup;
-  shippingAddressForm!: FormGroup;
-  paymentForm!: FormGroup;
-
   constructor() {
     // Watch for same as billing checkbox
     effect(() => {
@@ -50,7 +80,8 @@ export class CheckoutComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.initializeForms();
+    this.currentUser.set(this.authService.getUser());
+    this.loadProfile();
     this.calculatePrices();
 
     // Watch for shipping address state changes to recalculate tax
@@ -59,32 +90,37 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
-  initializeForms(): void {
-    // Billing Address Form
-    this.billingAddressForm = this.fb.group({
-      street: ['', [Validators.required, Validators.minLength(5)]],
-      city: ['', [Validators.required, Validators.minLength(2)]],
-      state: ['', [Validators.required, Validators.minLength(2)]],
-      zipCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
-      country: ['USA', [Validators.required]],
-    });
+  loadProfile(): void {
+    this.isProcessing.set(true);
+    this.userService
+      .getUserById(this.currentUser()?.id!)
+      .pipe(
+        finalize(() => {
+          this.isProcessing.set(false);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.profile.set(response.data);
+          this.authService.updateUser(response.data);
+          this.populateForms(response.data);
+        },
+      });
+  }
 
-    // Shipping Address Form
-    this.shippingAddressForm = this.fb.group({
-      street: ['', [Validators.required, Validators.minLength(5)]],
-      city: ['', [Validators.required, Validators.minLength(2)]],
-      state: ['', [Validators.required, Validators.minLength(2)]],
-      zipCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
-      country: ['USA', [Validators.required]],
-    });
+  populateForms(profile: User): void {
+    if (profile.shippingAddress) {
+      this.shippingAddressForm.patchValue(profile.shippingAddress);
+    }
 
-    // Payment Form
-    this.paymentForm = this.fb.group({
-      cardHolderName: ['', [Validators.required, Validators.minLength(3)]],
-      cardNumber: ['', [Validators.required, Validators.pattern(/^\d{13,19}$/)]],
-      expiryDate: ['', [Validators.required, Validators.pattern(/^(0[1-9]|1[0-2])\/\d{2}$/)]],
-      cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
-    });
+    if (profile.billingAddress) {
+      this.billingAddressForm.patchValue(profile.billingAddress);
+      this.sameAsBilling.set(profile.useSameAddressForBilling ?? false);
+
+      if (this.sameAsBilling()) {
+        this.billingAddressForm.disable();
+      }
+    }
   }
 
   calculatePrices(): void {
@@ -116,9 +152,19 @@ export class CheckoutComponent implements OnInit {
   }
 
   toggleSameAsBilling(): void {
-    this.sameAsBilling.set(!this.sameAsBilling());
+    const newValue = !this.sameAsBilling();
+    this.sameAsBilling.set(newValue);
+
     if (this.sameAsBilling()) {
       this.copyBillingToShipping();
+    }
+
+    if (newValue) {
+      this.copyBillingToShipping();
+      this.shippingAddressForm.disable();
+    } else {
+      this.shippingAddressForm.patchValue(this.profile()?.shippingAddress!);
+      this.shippingAddressForm.enable();
     }
   }
 
@@ -200,11 +246,11 @@ export class CheckoutComponent implements OnInit {
         productId: item.product.id,
         quantity: item.quantity,
       })),
-      billingAddress: this.billingAddressForm.value,
-      shippingAddress: this.shippingAddressForm.value,
+      billingAddress: this.billingAddressForm.value as Address,
+      shippingAddress: this.shippingAddressForm.value as Address,
       paymentInfo: {
         method: this.selectedPaymentMethod(),
-        cardHolderName: this.paymentForm.get('cardHolderName')?.value,
+        cardHolderName: this.paymentForm.get('cardHolderName')?.value!,
         cardLastFour: cardLastFour,
       },
       subtotal: this.subtotal(),

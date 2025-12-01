@@ -1,40 +1,41 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { CartService } from '../../../core/services/cart.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Product, WishlistItem } from '../../../core/models/models';
+import { Product } from '../../../core/models/models';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-wishlist',
-  imports: [ProductCardComponent, PaginationComponent],
   templateUrl: './wishlist.component.html',
+  imports: [ProductCardComponent, LoadingComponent, RouterLink],
 })
-export class WishlistComponent implements OnInit {
-  wishlistItems = signal<WishlistItem[]>([]);
-  totalItems = signal(0);
+export class WishlistComponent {
+  products = signal<Product[]>([]);
+  loading = signal(true);
 
-  currentPage = signal(1);
-  pageSize = signal(5);
-  totalPages = signal(0);
-  hasPreviousPage = signal(false);
-  hasNextPage = signal(false);
+  totalItems = computed(() => this.products().length);
 
   private wishlistService = inject(WishlistService);
   private cartService = inject(CartService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
 
-  ngOnInit(): void {
-    this.loadWishlist();
+  constructor() {
+    effect(() => {
+      const products = this.wishlistService.wishlist();
+      this.loadWishlist(products);
+    });
   }
 
-  loadWishlist(): void {
-    const wishlist = this.wishlistService.getWishlist();
-    this.wishlistItems.set(wishlist.items);
-    this.totalItems.set(wishlist.totalItems);
+  loadWishlist(products: Product[]): void {
+    this.loading.set(true);
+    setTimeout(() => {
+      this.products.set(products);
+      this.loading.set(false);
+    }, 500);
   }
 
   addToCart(item: Product): void {
@@ -42,34 +43,14 @@ export class WishlistComponent implements OnInit {
     this.notificationService.showSuccess('Producto agregado al carrito');
   }
 
-  removeFromWishlist(productId: number): void {
-    this.wishlistService.removeFromWishlist(productId);
-    this.loadWishlist();
-    this.notificationService.showSuccess('Producto eliminado de la lista de deseados');
-  }
-
   viewProductDetail(productId: number): void {
     this.router.navigate(['/products', productId]);
   }
 
-  getProductImage(item: WishlistItem): string {
-    if (item.product.images && item.product.images.length > 0) {
-      return item.product.images[0].path;
+  getProductImage(item: Product): string {
+    if (item.images && item.images.length > 0) {
+      return item.images[0].path;
     }
     return 'https://via.placeholder.com/300x300?text=No+Image';
-  }
-
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  changePage(page: number) {
-    this.currentPage.set(page);
-    // this.loadCategories();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

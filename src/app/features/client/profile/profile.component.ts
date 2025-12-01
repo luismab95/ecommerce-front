@@ -34,7 +34,7 @@ export class ProfileComponent implements OnInit {
     street: ['', Validators.required],
     city: ['', Validators.required],
     state: ['', Validators.required],
-    zipCode: ['', Validators.required],
+    code: ['', Validators.required],
     country: ['', Validators.required],
   });
 
@@ -42,7 +42,7 @@ export class ProfileComponent implements OnInit {
     street: ['', Validators.required],
     city: ['', Validators.required],
     state: ['', Validators.required],
-    zipCode: ['', Validators.required],
+    code: ['', Validators.required],
     country: ['', Validators.required],
   });
 
@@ -82,6 +82,11 @@ export class ProfileComponent implements OnInit {
 
     if (profile.billingAddress) {
       this.billingForm.patchValue(profile.billingAddress);
+      this.sameAsShipping.set(profile.useSameAddressForBilling ?? false);
+
+      if (this.sameAsShipping()) {
+        this.billingForm.disable();
+      }
     }
   }
 
@@ -95,6 +100,9 @@ export class ProfileComponent implements OnInit {
 
     if (newValue) {
       this.billingForm.patchValue(this.shippingForm.value);
+      this.billingForm.disable();
+    } else {
+      this.billingForm.enable();
     }
   }
 
@@ -140,10 +148,15 @@ export class ProfileComponent implements OnInit {
 
   updaterUserAddress(): void {
     this.saving.set(true);
+
+    const shippingForm = this.shippingForm.value as Address;
+    const billingAddress = this.billingForm.value as Address;
+
     this.userService
       .updateUserAddress(this.currentUser()?.id!, {
-        billingAddress: this.billingForm.value as Address,
-        shippingAddress: this.shippingForm.value as Address,
+        shippingAddress: shippingForm,
+        billingAddress:
+          this.profile()?.billingAddress?.city == null ? shippingForm : billingAddress,
       })
       .pipe(
         finalize(() => {

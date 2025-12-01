@@ -14,6 +14,7 @@ import {
   GeneralResponse,
 } from '../models/models';
 import { environment } from '../../../environments/environment';
+import { WishlistService } from './wishlist.service';
 
 @Injectable({
   providedIn: 'root',

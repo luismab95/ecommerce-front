@@ -1,97 +1,60 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Wishlist, WishlistItem, Product } from '../models/models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import { GeneralResponse, Product } from '../models/models';
+import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WishlistService {
-  private wishlistSignal = signal<Wishlist>({ items: [], totalItems: 0 });
+  private apiUrl = environment.API_URL;
+  private http = inject(HttpClient);
+  private authService = inject(AuthService);
+  private productsInWishlist = signal<Product[]>([]);
 
   // Computed signals
-  wishlist = this.wishlistSignal.asReadonly();
-  totalItems = computed(() => this.wishlistSignal().totalItems);
+  wishlist = this.productsInWishlist.asReadonly();
+  totalItems = computed(() => this.productsInWishlist().length);
 
   constructor() {
-    this.loadFromStorage();
+    this.clearWishlist();
   }
 
   // Get wishlist
-  getWishlist(): Wishlist {
-    return this.wishlistSignal();
+  getWishlist(userId: number): Observable<GeneralResponse<Product[]>> {
+    return this.http
+      .get<GeneralResponse<Product[]>>(`${this.apiUrl}/users/wishlist/${userId}`)
+      .pipe(
+        tap((response) => {
+          this.productsInWishlist.set(response.data);
+        })
+      );
   }
 
   // Add product to wishlist
-  addToWishlist(product: Product): void {
-    const currentWishlist = this.wishlistSignal();
-
-    // Check if product already exists in wishlist
-    const existingItem = currentWishlist.items.find((item) => item.product.id === product.id);
-
-    if (existingItem) {
-      // Product already in wishlist, do nothing
-      return;
-    }
-
-    // Add new item to wishlist
-    const newItem: WishlistItem = {
-      product,
-      addedAt: new Date(),
-    };
-
-    const updatedWishlist: Wishlist = {
-      items: [...currentWishlist.items, newItem],
-      totalItems: currentWishlist.totalItems + 1,
-    };
-
-    this.wishlistSignal.set(updatedWishlist);
-    this.saveToStorage();
-  }
-
-  // Remove product from wishlist
-  removeFromWishlist(productId: number): void {
-    const currentWishlist = this.wishlistSignal();
-    const updatedItems = currentWishlist.items.filter((item) => item.product.id !== productId);
-
-    const updatedWishlist: Wishlist = {
-      items: updatedItems,
-      totalItems: updatedItems.length,
-    };
-
-    this.wishlistSignal.set(updatedWishlist);
-    this.saveToStorage();
+  toggleWishlist(productId: number, userId: number): Observable<GeneralResponse<string>> {
+    return this.http
+      .post<GeneralResponse<string>>(`${this.apiUrl}/users/wishlist/${userId}`, {
+        productId,
+      })
+      .pipe(
+        tap(() => {
+          this.clearWishlist();
+        })
+      );
   }
 
   // Check if product is in wishlist
   isInWishlist(productId: number): boolean {
-    return this.wishlistSignal().items.some((item) => item.product.id === productId);
+    return this.wishlist().some((item) => item.id === productId);
   }
 
   // Clear wishlist
   clearWishlist(): void {
-    this.wishlistSignal.set({ items: [], totalItems: 0 });
-    this.saveToStorage();
-  }
-
-  // Save to localStorage
-  private saveToStorage(): void {
-    localStorage.setItem('wishlist', JSON.stringify(this.wishlistSignal()));
-  }
-
-  // Load from localStorage
-  private loadFromStorage(): void {
-    const wishlistStr = localStorage.getItem('wishlist');
-    if (wishlistStr) {
-      try {
-        const wishlist = JSON.parse(wishlistStr);
-        // Convert date strings back to Date objects
-        wishlist.items = wishlist.items.map((item: WishlistItem) => ({
-          ...item,
-          addedAt: new Date(item.addedAt),
-        }));
-        this.wishlistSignal.set(wishlist);
-      } catch (e) {
-        console.error('Error loading wishlist from storage', e);
-      }
-    }
+    this.productsInWishlist.set([]);
+    if (this.authService.isAuthenticated())
+      this.getWishlist(this.authService.currentUser()?.id!).subscribe();
   }
 }

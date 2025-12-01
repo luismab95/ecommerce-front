@@ -1,6 +1,7 @@
-import { Component, input, output, inject } from '@angular/core';
+import { Component, input, output, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Product } from '../../../core/models/models';
+import { finalize } from 'rxjs';
+import { Product, User } from '../../../core/models/models';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './product-card.html',
   imports: [RouterLink],
 })
-export class ProductCardComponent {
+export class ProductCardComponent implements OnInit {
   // Services
   private wishlistService = inject(WishlistService);
   public authService = inject(AuthService);
@@ -19,10 +20,16 @@ export class ProductCardComponent {
   // Input signals
   product = input.required<Product>();
   showFeaturedBadge = input<boolean>(true);
+  isSaving = signal<boolean>(false);
+  currentUser = signal<User | null>(null);
 
   // Output signals
   addToCartClick = output<Product>();
   viewDetailsClick = output<Product>();
+
+  ngOnInit(): void {
+    this.currentUser.set(this.authService.currentUser());
+  }
 
   onAddToCart(event: Event) {
     event.preventDefault();
@@ -37,15 +44,16 @@ export class ProductCardComponent {
   toggleWishlist(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    this.isSaving.set(true);
 
-    const product = this.product();
-    if (this.wishlistService.isInWishlist(product.id)) {
-      this.wishlistService.removeFromWishlist(product.id);
-      this.notificationService.showInfo('Producto eliminado de la lista de deseados');
-    } else {
-      this.wishlistService.addToWishlist(product);
-      this.notificationService.showSuccess('Producto agregado a la lista de deseados');
-    }
+    this.wishlistService
+      .toggleWishlist(this.product().id, this.currentUser()?.id!)
+      .pipe(finalize(() => this.isSaving.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.notificationService.showSuccess(response.data);
+        },
+      });
   }
 
   isInWishlist(): boolean {

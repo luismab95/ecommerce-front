@@ -19,6 +19,7 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  useSameAddressForBilling?: boolean;
   shippingAddress?: Address;
   billingAddress?: Address;
 }
@@ -159,7 +160,7 @@ export interface Address {
   street: string;
   city: string;
   state: string;
-  zipCode: string;
+  code: string;
   country: string;
 }
 
@@ -221,17 +222,6 @@ export interface CreateOrderRequest {
   tax: number;
   shippingCost: number;
   totalPrice: number;
-}
-
-// Wishlist Interfaces
-export interface WishlistItem {
-  product: Product;
-  addedAt: Date;
-}
-
-export interface Wishlist {
-  items: WishlistItem[];
-  totalItems: number;
 }
 
 export interface UpdateUserAddressRequest {

@@ -14,7 +14,7 @@
         <!-- Wishlist Button -->
         @if (authService.isAuthenticated()) {
 
-        <button (click)="toggleWishlist($event)"
+        <button (click)="toggleWishlist($event)" [disabled]="isSaving()"
             class="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200 group/wishlist focus:outline-none focus:ring-2 focus:ring-primary"
             [title]="isInWishlist() ? 'Eliminar de deseados' : 'Agregar a deseados'">
             <svg class="w-5 h-5 transition-colors duration-200" [class.text-red-500]="isInWishlist()"

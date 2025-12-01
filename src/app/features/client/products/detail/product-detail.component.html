@@ -52,7 +52,7 @@
 
                     <div class="flex items-center justify-between mb-4">
                         <h1 class="text-4xl font-bold text-text-main truncate">{{ product()?.name }}</h1>
-                        <button (click)="toggleWishlist()"
+                        <button (click)="toggleWishlist()" [disabled]="loading()"
                             class="px-3 py-3 bg-surface border border-border text-text-main rounded-xl hover:bg-surface-subtle transition-all flex items-center justify-center group"
                             [title]="isInWishlist() ? 'Eliminar de deseados' : 'Agregar a deseados'">
                             <svg class="w-6 h-6 transition-colors duration-200" [class.text-red-500]="isInWishlist()"

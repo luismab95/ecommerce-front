@@ -65,14 +65,14 @@ export class OrderService {
           street: `Calle Principal ${i}`,
           city: 'Ciudad Demo',
           state: 'Estado',
-          zipCode: '12345',
+          code: '12345',
           country: 'País',
         },
         shippingAddress: {
           street: `Calle Principal ${i}`,
           city: 'Ciudad Demo',
           state: 'Estado',
-          zipCode: '12345',
+          code: '12345',
           country: 'País',
         },
         paymentInfo: {
