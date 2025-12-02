@@ -8,12 +8,7 @@ import { PaymentMethod, PaymentInfo } from '../models/models';
 export class PaymentService {
   // Get available payment methods
   getPaymentMethods(): Observable<PaymentMethod[]> {
-    return of([
-      PaymentMethod.CREDIT_CARD,
-      PaymentMethod.DEBIT_CARD,
-      PaymentMethod.PAYPAL,
-      PaymentMethod.BANK_TRANSFER,
-    ]);
+    return of([PaymentMethod.CREDIT_CARD, PaymentMethod.DEBIT_CARD]);
   }
 
   // Simulate payment processing

@@ -5,6 +5,7 @@ import { Product, User } from '../../../core/models/models';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CartService } from '../../../core/services/cart.service';
 
 @Component({
   selector: 'app-product-card',
@@ -13,6 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class ProductCardComponent implements OnInit {
   // Services
+  cartService = inject(CartService);
   private wishlistService = inject(WishlistService);
   public authService = inject(AuthService);
   private notificationService = inject(NotificationService);
@@ -58,5 +60,13 @@ export class ProductCardComponent implements OnInit {
 
   isInWishlist(): boolean {
     return this.wishlistService.isInWishlist(this.product().id);
+  }
+
+  validateStock(): boolean {
+    const item = this.cartService.cartItems().find((item) => item.product.id === this.product().id);
+    if (item) {
+      return item.quantity >= this.product().stock;
+    }
+    return this.product().stock === 0;
   }
 }

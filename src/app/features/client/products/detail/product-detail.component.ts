@@ -100,4 +100,14 @@ export class ProductDetailComponent implements OnInit {
     const product = this.product();
     return product ? this.wishlistService.isInWishlist(product.id) : false;
   }
+
+  validateStock(): boolean {
+    const item = this.cartService
+      .cartItems()
+      .find((item) => item.product.id === this.product()!.id);
+    if (item) {
+      return item.quantity >= this.product()!.stock;
+    }
+    return this.product()!.stock === 0;
+  }
 }

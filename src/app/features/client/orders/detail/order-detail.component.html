@@ -144,7 +144,7 @@
                     <div class="text-text-muted space-y-1">
                         <p>{{ order()!.shippingAddress.street }}</p>
                         <p>{{ order()!.shippingAddress.city }}, {{ order()!.shippingAddress.state }}</p>
-                        <p>{{ order()!.shippingAddress.zipCode }}</p>
+                        <p>{{ order()!.shippingAddress.code }}</p>
                         <p>{{ order()!.shippingAddress.country }}</p>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
                     <div class="text-text-muted space-y-1">
                         <p>{{ order()!.billingAddress.street }}</p>
                         <p>{{ order()!.billingAddress.city }}, {{ order()!.billingAddress.state }}</p>
-                        <p>{{ order()!.billingAddress.zipCode }}</p>
+                        <p>{{ order()!.billingAddress.code }}</p>
                         <p>{{ order()!.billingAddress.country }}</p>
                     </div>
                 </div>

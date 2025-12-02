@@ -147,6 +147,7 @@ export interface GeneralResponse<T> {
 export interface CartItem {
   product: Product;
   quantity: number;
+  disabledInStock?: boolean;
 }
 
 export interface Cart {
@@ -168,8 +169,6 @@ export interface Address {
 export enum PaymentMethod {
   CREDIT_CARD = 'Credit Card',
   DEBIT_CARD = 'Debit Card',
-  PAYPAL = 'PayPal',
-  BANK_TRANSFER = 'Bank Transfer',
 }
 
 export interface PaymentInfo {

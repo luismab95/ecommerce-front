@@ -66,8 +66,7 @@ export class LoginComponent {
           if (response.data.user.role === 'Administrador') {
             this.router.navigate(['/admin']);
           } else {
-            // Stay on current page for regular users
-            this.router.navigate(['/']);
+            window.location.reload();
           }
         },
       });
