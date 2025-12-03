@@ -1,5 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { finalize } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -28,6 +34,7 @@ export class ProfileComponent implements OnInit {
     firstName: ['', [Validators.required, Validators.minLength(2)]],
     lastName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, phoneValidator]],
   });
 
   shippingForm = this.fb.group({
@@ -74,6 +81,7 @@ export class ProfileComponent implements OnInit {
       firstName: profile.firstName,
       lastName: profile.lastName,
       email: profile.email,
+      phone: profile.phone,
     });
 
     if (profile.shippingAddress) {
@@ -170,4 +178,21 @@ export class ProfileComponent implements OnInit {
         },
       });
   }
+}
+
+// Custom validator for international phone numbers
+function phoneValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) {
+    return null; // Let the required validator handle empty values
+  }
+
+  // International phone format: +[country code][number]
+  // Accepts: +34612345678, +1234567890, etc.
+  const phoneRegex = /^\+\d{1,4}\d{6,14}$/;
+
+  if (!phoneRegex.test(control.value)) {
+    return { invalidPhone: true };
+  }
+
+  return null;
 }
