@@ -1,8 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Order, OrderStatus } from '../../../../core/models/models';
+import { Order, OrderListParams, OrderStatus } from '../../../../core/models/models';
 import { OrderService } from '../../../../core/services/order.service';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-order-list',
@@ -21,7 +23,9 @@ export class OrderListComponent implements OnInit {
 
   OrderStatus = OrderStatus;
 
-  constructor(private orderService: OrderService, private router: Router) {}
+  private authService = inject(AuthService);
+  private orderService = inject(OrderService);
+  private router = inject(Router);
 
   ngOnInit(): void {
     this.loadOrders();
@@ -29,18 +33,23 @@ export class OrderListComponent implements OnInit {
 
   loadOrders(): void {
     this.loading.set(true);
-    this.orderService.getOrders(this.currentPage(), this.pageSize).subscribe({
-      next: (response) => {
-        this.orders.set(response.data.items);
-        this.totalPages.set(response.data.totalPages);
-        this.totalCount.set(response.data.totalCount);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading orders:', error);
-        this.loading.set(false);
-      },
-    });
+    const orderParams: OrderListParams = {
+      pageNumber: this.currentPage(),
+      pageSize: this.pageSize,
+      userId: this.authService.currentUser()?.id.toString(),
+    };
+    this.orderService
+      .getOrders(orderParams)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.orders.set(response.data.items);
+          this.totalPages.set(response.data.totalPages);
+          this.totalCount.set(response.data.totalCount);
+          this.hasPreviousPage.set(response.data.hasPreviousPage);
+          this.hasNextPage.set(response.data.hasNextPage);
+        },
+      });
   }
 
   goToPage(page: number): void {

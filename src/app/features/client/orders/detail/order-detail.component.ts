@@ -1,9 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgClass } from '@angular/common';
+import { finalize } from 'rxjs';
 import { Order, OrderStatus } from '../../../../core/models/models';
 import { OrderService } from '../../../../core/services/order.service';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-order-detail',
@@ -14,12 +16,12 @@ export class OrderDetailComponent implements OnInit {
   order = signal<Order | null>(null);
   loading = signal(false);
   OrderStatus = OrderStatus;
+  showCancelModal = signal(false);
 
-  constructor(
-    private orderService: OrderService,
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
+  private orderService = inject(OrderService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
 
   ngOnInit(): void {
     const orderId = this.route.snapshot.paramMap.get('id');
@@ -30,20 +32,22 @@ export class OrderDetailComponent implements OnInit {
 
   loadOrderDetail(orderId: number): void {
     this.loading.set(true);
-    this.orderService.getOrderById(orderId).subscribe({
-      next: (response) => {
-        this.order.set(response.data);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading order:', error);
-        this.loading.set(false);
-        this.router.navigate(['/orders']);
-      },
-    });
+    this.orderService
+      .getOrderById(orderId)
+      .pipe(
+        finalize(() => {
+          this.loading.set(false);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.order.set(response.data);
+        },
+        error: () => {
+          this.router.navigate(['/orders']);
+        },
+      });
   }
-
-  showCancelModal = signal(false);
 
   openCancelModal(): void {
     this.showCancelModal.set(true);
@@ -58,20 +62,21 @@ export class OrderDetailComponent implements OnInit {
     if (!currentOrder) return;
 
     this.loading.set(true);
-    this.orderService.cancelOrder(currentOrder.id).subscribe({
-      next: (response) => {
-        this.order.set(response.data);
-        this.loading.set(false);
-        this.closeCancelModal();
-        // Optional: Show a toast or success message here instead of alert if possible, but alert is fine for now as per previous context
-      },
-      error: (error) => {
-        console.error('Error cancelling order:', error);
-        this.loading.set(false);
-        this.closeCancelModal();
-        alert('No se pudo cancelar el pedido. Inténtalo de nuevo.');
-      },
-    });
+    this.orderService
+      .cancelOrder(currentOrder.id)
+
+      .pipe(
+        finalize(() => {
+          this.loading.set(false);
+          this.closeCancelModal();
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.notificationService.show(response.message, 'success');
+          this.loadOrderDetail(this.order()?.id!);
+        },
+      });
   }
 
   getStatusClass(status: OrderStatus): string {
@@ -122,7 +127,7 @@ export class OrderDetailComponent implements OnInit {
     const currentIndex = statusOrder.indexOf(currentOrder.status);
 
     return statusOrder.map((status, index) => ({
-      label: status,
+      label: this.getStatus(status),
       status,
       completed: index <= currentIndex,
     }));
@@ -143,5 +148,22 @@ export class OrderDetailComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  getStatus(status: OrderStatus) {
+    switch (status) {
+      case OrderStatus.PENDING:
+        return 'Pendiente';
+      case OrderStatus.PROCESSING:
+        return 'Procesando';
+      case OrderStatus.SHIPPED:
+        return 'Enviado';
+      case OrderStatus.DELIVERED:
+        return 'Entregado';
+      case OrderStatus.CANCELLED:
+        return 'Cancelado';
+      default:
+        return 'Estado Desconocido';
+    }
   }
 }

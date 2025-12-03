@@ -36,7 +36,8 @@
                                 d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                 clip-rule="evenodd"></path>
                         </svg>
-                        <span class="ml-1 text-sm font-medium text-text-main md:ml-2">Pedido #{{ order()?.id }}</span>
+                        <span class="ml-1 text-sm font-medium text-text-main md:ml-2">Pedido #{{ order()?.orderNumber
+                            }}</span>
                     </div>
                 </li>
             </ol>
@@ -56,28 +57,26 @@
             <div class="bg-surface rounded-2xl shadow-lg p-6 border border-border">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-text-main mb-2">Pedido #{{ order()!.id }}</h1>
+                        <h1 class="text-3xl font-bold text-text-main mb-2">Pedido #{{ order()!.orderNumber }}</h1>
                         <span [ngClass]="getStatusClass(order()!.status)"
                             class="px-3 py-1.5 text-sm font-semibold rounded-full flex items-center gap-2 w-fit mb-2">
                             {{ getStatusIcon(order()!.status) }}
-                            {{ order()!.status }}
+                            {{ getStatus(order()!.status) }}
                         </span>
                         <p class="text-text-muted">Realizado el {{ formatDate(order()!.createdAt) }}</p>
+                        @if (order()!.status === OrderStatus.CANCELLED) {
+                        <p class="text-text-muted">Cancelado el {{ formatDate(order()!.updatedAt) }}</p>
+                        }
                     </div>
                     @if (order()!.status === OrderStatus.PENDING) {
                     <div class="flex items-center gap-4">
                         <button (click)="openCancelModal()"
                             class="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2">
-
                             Cancelar Pedido
                         </button>
                     </div>
                     }
                 </div>
-
-
-
-
 
             </div>
 
@@ -142,6 +141,8 @@
                         <span>Dirección de Envío</span>
                     </h2>
                     <div class="text-text-muted space-y-1">
+                        <p>{{ order()!.shippingAddress.email }}</p>
+                        <p>{{ order()!.shippingAddress.phone }}</p>
                         <p>{{ order()!.shippingAddress.street }}</p>
                         <p>{{ order()!.shippingAddress.city }}, {{ order()!.shippingAddress.state }}</p>
                         <p>{{ order()!.shippingAddress.code }}</p>
@@ -202,7 +203,7 @@
                             <span class="text-xl font-bold text-text-main">Total</span>
                             <span
                                 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                ${{ order()!.totalPrice.toFixed(2) }}
+                                ${{ order()!.total.toFixed(2) }}
                             </span>
                         </div>
                     </div>

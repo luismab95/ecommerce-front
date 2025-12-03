@@ -174,8 +174,8 @@ export enum PaymentMethod {
 
 export interface PaymentInfo {
   method: PaymentMethod;
-  cardHolderName?: string;
-  cardLastFour?: string;
+  cardHolderName: string;
+  cardLastFour: string;
 }
 
 // Order Interfaces
@@ -196,32 +196,36 @@ export interface OrderItem {
 
 export interface Order {
   id: number;
+  orderNumber: string;
   userId: number;
   items: OrderItem[];
-  billingAddress: Address;
-  shippingAddress: Address;
+  billingAddress: OrderAddress;
+  shippingAddress: OrderAddress;
   paymentInfo: PaymentInfo;
   subtotal: number;
   tax: number;
   shippingCost: number;
-  totalPrice: number;
+  total: number;
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
+export interface OrderAddress extends Address {
+  email?: string;
+  phone?: string;
+}
+
+export interface OrderListParams extends PaginationParams {
+  userId?: string;
+}
+
 export interface CreateOrderRequest {
-  items: {
-    productId: number;
-    quantity: number;
-  }[];
-  billingAddress: Address;
-  shippingAddress: Address;
+  userId: number;
+  items: OrderItem[];
+  billingAddress: OrderAddress;
+  shippingAddress: OrderAddress;
   paymentInfo: PaymentInfo;
-  subtotal: number;
-  tax: number;
-  shippingCost: number;
-  totalPrice: number;
 }
 
 export interface UpdateUserAddressRequest {
