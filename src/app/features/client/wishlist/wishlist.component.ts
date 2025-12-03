@@ -35,7 +35,7 @@ export class WishlistComponent {
     setTimeout(() => {
       this.products.set(products);
       this.loading.set(false);
-    }, 500);
+    }, 100);
   }
 
   addToCart(item: Product): void {
