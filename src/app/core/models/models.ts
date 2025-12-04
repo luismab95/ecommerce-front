@@ -209,6 +209,9 @@ export interface Order {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
+  email: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface OrderAddress extends Address {

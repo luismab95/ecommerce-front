@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, finalize, startWith } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize, startWith } from 'rxjs/operators';
 import { UserService } from '../../../core/services/user.service';
 import { User, UserRole } from '../../../core/models/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -40,8 +40,11 @@ export class AdminUsersComponent implements OnInit {
 
   ngOnInit() {
     this.searchControl.valueChanges
-      .pipe(startWith(''), debounceTime(400))
-      .subscribe(() => this.loadUsers());
+      .pipe(startWith(''), debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.loadUsers();
+      });
   }
 
   loadUsers() {

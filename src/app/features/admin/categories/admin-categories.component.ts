@@ -16,7 +16,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { NotificationService } from '../../../core/services/notification.service';
-import { debounceTime, finalize, startWith } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-categories',
@@ -57,8 +57,11 @@ export class AdminCategoriesComponent implements OnInit {
 
   ngOnInit() {
     this.searchControl.valueChanges
-      .pipe(startWith(''), debounceTime(400))
-      .subscribe(() => this.loadCategories());
+      .pipe(startWith(''), debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.loadCategories();
+      });
   }
 
   loadCategories() {

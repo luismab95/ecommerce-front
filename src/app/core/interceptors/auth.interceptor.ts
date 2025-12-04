@@ -75,8 +75,7 @@ function handle401Error(
           5000
         );
         authService.logout().subscribe();
-        router.navigate(['/']);
-
+        window.location.reload();
         return throwError(() => refreshError);
       })
     );

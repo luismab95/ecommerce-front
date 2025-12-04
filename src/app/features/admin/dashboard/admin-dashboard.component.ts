@@ -4,6 +4,7 @@ import { forkJoin } from 'rxjs';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { UserService } from '../../../core/services/user.service';
+import { OrderService } from '../../../core/services/order.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -15,7 +16,7 @@ export class AdminDashboardComponent implements OnInit {
     totalProducts: 0,
     totalCategories: 0,
     totalUsers: 0,
-    featuredProducts: 0,
+    totalOrders: 0,
   });
 
   pageNumber = signal(1);
@@ -24,7 +25,8 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private userService: UserService
+    private userService: UserService,
+    private orderService: OrderService
   ) {}
 
   ngOnInit() {
@@ -41,13 +43,17 @@ export class AdminDashboardComponent implements OnInit {
         pageNumber: this.pageNumber(),
         pageSize: this.pageSize(),
       }),
+      ordersResponse: this.orderService.getOrders({
+        pageNumber: this.pageNumber(),
+        pageSize: this.pageSize(),
+      }),
     }).subscribe({
-      next: ({ productsResponse, categoriesResponse, usersResponse }) => {
+      next: ({ productsResponse, categoriesResponse, usersResponse, ordersResponse }) => {
         this.stats.set({
           totalProducts: productsResponse.data.totalCount,
           totalCategories: categoriesResponse.data.totalCount,
           totalUsers: usersResponse.data.totalCount,
-          featuredProducts: productsResponse.data.items.filter((p) => p.featured).length,
+          totalOrders: ordersResponse.data.totalCount,
         });
       },
     });
