@@ -5,6 +5,7 @@ import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Address, User } from '../../../core/models/models';
 import { AuthService } from '../../../core/services/auth.service';
+import { phoneValidator } from '../../../core/utils/phone.validator';
 
 @Component({
   selector: 'app-profile',
@@ -28,6 +29,7 @@ export class ProfileComponent implements OnInit {
     firstName: ['', [Validators.required, Validators.minLength(2)]],
     lastName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, phoneValidator]],
   });
 
   shippingForm = this.fb.group({
@@ -74,6 +76,7 @@ export class ProfileComponent implements OnInit {
       firstName: profile.firstName,
       lastName: profile.lastName,
       email: profile.email,
+      phone: profile.phone,
     });
 
     if (profile.shippingAddress) {

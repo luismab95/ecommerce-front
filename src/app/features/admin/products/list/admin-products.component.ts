@@ -2,19 +2,19 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { debounceTime, finalize, startWith } from 'rxjs/operators';
-import { ProductService } from '../../../core/services/product.service';
-import { CategoryService } from '../../../core/services/category.service';
+import { debounceTime, distinctUntilChanged, finalize, startWith } from 'rxjs/operators';
 import {
   Product,
   Category,
   CreateProductRequest,
   UpdateProductRequest,
-} from '../../../core/models/models';
-import { LoadingComponent } from '../../../shared/components/loading/loading.component';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
-import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
-import { NotificationService } from '../../../core/services/notification.service';
+} from '../../../../core/models/models';
+import { CategoryService } from '../../../../core/services/category.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-admin-products',
@@ -65,8 +65,11 @@ export class AdminProductsComponent implements OnInit {
 
   ngOnInit() {
     this.searchControl.valueChanges
-      .pipe(startWith(''), debounceTime(400))
-      .subscribe(() => this.loadData());
+      .pipe(startWith(''), debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.loadData();
+      });
   }
 
   loadData() {

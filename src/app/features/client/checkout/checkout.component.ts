@@ -10,6 +10,7 @@ import { TaxService } from '../../../core/services/tax.service';
 import { Address, CreateOrderRequest, PaymentMethod, User } from '../../../core/models/models';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { phoneValidator } from '../../../core/utils/phone.validator';
 
 @Component({
   selector: 'app-checkout',
@@ -45,6 +46,8 @@ export class CheckoutComponent implements OnInit {
     state: ['', [Validators.required, Validators.minLength(2)]],
     code: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
     country: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, phoneValidator]],
   });
 
   // Payment Form
@@ -69,15 +72,6 @@ export class CheckoutComponent implements OnInit {
   // Payment methods
   paymentMethods = Object.values(PaymentMethod);
   selectedPaymentMethod = signal<PaymentMethod>(PaymentMethod.CREDIT_CARD);
-
-  constructor() {
-    // Watch for same as billing checkbox
-    effect(() => {
-      if (this.sameAsBilling()) {
-        this.copyBillingToShipping();
-      }
-    });
-  }
 
   ngOnInit(): void {
     this.currentUser.set(this.authService.getUser());
@@ -110,7 +104,11 @@ export class CheckoutComponent implements OnInit {
 
   populateForms(profile: User): void {
     if (profile.shippingAddress) {
-      this.shippingAddressForm.patchValue(profile.shippingAddress);
+      this.shippingAddressForm.patchValue({
+        email: profile.email,
+        phone: profile.phone,
+        ...profile.shippingAddress,
+      });
     }
 
     if (profile.billingAddress) {
@@ -134,16 +132,10 @@ export class CheckoutComponent implements OnInit {
     });
 
     // Calculate tax based on shipping state
-    const shippingState = this.shippingAddressForm.get('state')?.value;
-    if (shippingState && shippingState.length >= 2) {
-      this.taxService.calculateTax(cartTotal, shippingState).subscribe((taxAmount) => {
-        this.tax.set(taxAmount);
-        this.updateTotal();
-      });
-    } else {
-      this.tax.set(0);
+    this.taxService.calculateTax(cartTotal).subscribe((taxAmount) => {
+      this.tax.set(taxAmount);
       this.updateTotal();
-    }
+    });
   }
 
   updateTotal(): void {
@@ -152,25 +144,23 @@ export class CheckoutComponent implements OnInit {
   }
 
   toggleSameAsBilling(): void {
+    const formValue = this.shippingAddressForm.value;
     const newValue = !this.sameAsBilling();
     this.sameAsBilling.set(newValue);
 
-    if (this.sameAsBilling()) {
-      this.copyBillingToShipping();
-    }
-
     if (newValue) {
-      this.copyBillingToShipping();
-      this.shippingAddressForm.disable();
+      this.shippingAddressForm.reset();
+      this.shippingAddressForm.patchValue({
+        email: formValue.email,
+        phone: formValue.phone,
+      });
     } else {
-      this.shippingAddressForm.patchValue(this.profile()?.shippingAddress!);
-      this.shippingAddressForm.enable();
+      this.shippingAddressForm.patchValue({
+        email: formValue.email,
+        phone: formValue.phone,
+        ...this.profile()?.shippingAddress,
+      });
     }
-  }
-
-  copyBillingToShipping(): void {
-    const billingValues = this.billingAddressForm.value;
-    this.shippingAddressForm.patchValue(billingValues);
   }
 
   selectPaymentMethod(method: PaymentMethod): void {
@@ -206,7 +196,10 @@ export class CheckoutComponent implements OnInit {
 
   isFormValid(): boolean {
     const billingValid = this.billingAddressForm.valid;
-    const shippingValid = this.shippingAddressForm.valid;
+    const shippingValid = this.sameAsBilling()
+      ? (this.shippingAddressForm.get('email')?.valid ?? false) &&
+        (this.shippingAddressForm.get('phone')?.valid ?? false)
+      : this.shippingAddressForm.valid;
     const paymentValid =
       this.selectedPaymentMethod() === PaymentMethod.CREDIT_CARD ||
       this.selectedPaymentMethod() === PaymentMethod.DEBIT_CARD
@@ -214,6 +207,18 @@ export class CheckoutComponent implements OnInit {
         : true;
 
     return billingValid && shippingValid && paymentValid && this.cartService.cartItems().length > 0;
+  }
+
+  toggleDisableForms(disable: boolean): void {
+    if (disable) {
+      this.billingAddressForm.disable();
+      this.shippingAddressForm.disable();
+      this.paymentForm.disable();
+    } else {
+      this.billingAddressForm.enable();
+      this.shippingAddressForm.enable();
+      this.paymentForm.enable();
+    }
   }
 
   // Place order
@@ -240,37 +245,47 @@ export class CheckoutComponent implements OnInit {
       cardLastFour = cardNumber.slice(-4);
     }
 
+    this.toggleDisableForms(true);
+
     // Prepare order request
     const orderRequest: CreateOrderRequest = {
       items: this.cartService.cartItems().map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
+        productName: item.product.name,
+        price: item.product.price,
       })),
       billingAddress: this.billingAddressForm.value as Address,
-      shippingAddress: this.shippingAddressForm.value as Address,
+      shippingAddress: this.sameAsBilling()
+        ? {
+            email: this.shippingAddressForm.value.email || '',
+            phone: this.shippingAddressForm.value.phone || '',
+            ...(this.billingAddressForm.value as Address),
+          }
+        : (this.shippingAddressForm.value as Address),
       paymentInfo: {
         method: this.selectedPaymentMethod(),
         cardHolderName: this.paymentForm.get('cardHolderName')?.value!,
         cardLastFour: cardLastFour,
       },
-      subtotal: this.subtotal(),
-      tax: this.tax(),
-      shippingCost: this.shippingCost(),
-      totalPrice: this.total(),
+      userId: this.authService.currentUser()?.id!,
     };
 
     // Create order
     this.orderService
       .createOrder(orderRequest)
-      .pipe(finalize(() => this.isProcessing.set(false)))
+      .pipe(
+        finalize(() => {
+          this.isProcessing.set(false);
+          this.toggleDisableForms(false);
+        })
+      )
       .subscribe({
         next: (response) => {
           this.notificationService.show(response.message, 'success');
           this.cartService.clearCart();
-          this.router.navigate(['/']);
-        },
-        error: (error) => {
-          this.notificationService.show(error.message || 'Error al procesar el pedido', 'error');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          this.router.navigate(['/orders']);
         },
       });
   }

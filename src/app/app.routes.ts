@@ -59,7 +59,7 @@ export const routes: Routes = [
         path: 'orders/:id',
         loadComponent: () =>
           import('./features/client/orders/detail/order-detail.component').then(
-            (m) => m.OrderDetailComponent
+            (m) => m.OrderClientDetailComponent
           ),
         canActivate: [authGuard],
       },
@@ -97,7 +97,7 @@ export const routes: Routes = [
       {
         path: 'products',
         loadComponent: () =>
-          import('./features/admin/products/admin-products.component').then(
+          import('./features/admin/products/list/admin-products.component').then(
             (m) => m.AdminProductsComponent
           ),
       },
@@ -119,6 +119,20 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () =>
           import('./features/admin/users/admin-users.component').then((m) => m.AdminUsersComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/admin/orders/list/admin-orders.component').then(
+            (m) => m.AdminOrdersComponent
+          ),
+      },
+      {
+        path: 'orders/:id/detail',
+        loadComponent: () =>
+          import('./features/admin/orders/detail/admin-order-detail.component').then(
+            (m) => m.AdminOrderDetailComponent
+          ),
       },
     ],
   },
