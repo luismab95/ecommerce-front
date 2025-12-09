@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { finalize } from 'rxjs/operators';
 import { RegisterRequest } from '../../../core/models/models';
+import { phoneValidator } from '../../../core/utils/phone.validator';
 
 @Component({
   selector: 'app-register',
@@ -28,6 +29,7 @@ export class RegisterComponent {
     lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
+    phone: ['', [Validators.required, phoneValidator]],
   });
 
   isFieldInvalid(fieldName: string): boolean {
