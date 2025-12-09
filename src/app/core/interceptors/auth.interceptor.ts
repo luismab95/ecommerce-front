@@ -32,7 +32,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // Handle other errors
-      return handleOtherErrors(error, notificationService, authService, router);
+      return handleOtherErrors(error, notificationService);
     })
   );
 };
@@ -93,9 +93,7 @@ function handle401Error(
 
 function handleOtherErrors(
   error: HttpErrorResponse,
-  notificationService: NotificationService,
-  authService: AuthService,
-  router: Router
+  notificationService: NotificationService
 ): Observable<HttpEvent<unknown>> {
   let errorMessage = 'Ha ocurrido un error';
 
@@ -109,8 +107,8 @@ function handleOtherErrors(
       errorMessage = error.error.data
         .map((error: ValidationError) => error.errors.join(', '))
         .join(', ');
-    } else if (error.error?.message) {
-      errorMessage = error.error.message;
+    } else if (error.error?.Message) {
+      errorMessage = error.error.Message;
     } else if (error.message) {
       errorMessage = error.message;
     } else {
