@@ -74,7 +74,7 @@ function handle401Error(
           'Sesión expirada. Por favor, inicia sesión nuevamente.',
           5000
         );
-        authService.logout().subscribe();
+        authService.removeLocalStorage();
         window.location.reload();
         return throwError(() => refreshError);
       })
