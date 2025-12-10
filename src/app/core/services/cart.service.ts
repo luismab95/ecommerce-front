@@ -1,10 +1,25 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Cart, CartItem, Product } from '../models/models';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import {
+  Cart,
+  CartItem,
+  CreateCategoryRequest,
+  CreateOrUpdateShoppingCartRequest,
+  GeneralResponse,
+  Product,
+} from '../models/models';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CartService {
+  private apiUrl = environment.API_URL;
+  private http = inject(HttpClient);
+  private _authService = inject(AuthService);
+
   private readonly CART_STORAGE_KEY = 'shopping_cart';
 
   // Signal to hold cart items
@@ -50,6 +65,7 @@ export class CartService {
 
     this.cartItemsSignal.set(currentItems);
     this.saveCartToStorage();
+    this.saveShoppingCart().subscribe();
   }
 
   // Remove product from cart
@@ -57,6 +73,7 @@ export class CartService {
     const currentItems = this.cartItemsSignal().filter((item) => item.product.id !== productId);
     this.cartItemsSignal.set(currentItems);
     this.saveCartToStorage();
+    this.saveShoppingCart().subscribe();
   }
 
   // Update quantity of a product in cart
@@ -73,13 +90,38 @@ export class CartService {
       currentItems[itemIndex].quantity = quantity;
       this.cartItemsSignal.set(currentItems);
       this.saveCartToStorage();
+      this.saveShoppingCart().subscribe();
     }
+  }
+
+  // Save cart
+  saveShoppingCart(): Observable<GeneralResponse<string>> {
+    if (!this._authService.isAuthenticated()) {
+      return of({
+        data: '',
+        message: '',
+      });
+    }
+    const saveShoppingCartRequest = {
+      userId: this._authService.currentUser()?.id!,
+      items: this.cartItemsSignal().map((item) => {
+        return {
+          productId: item.product.id,
+          quantity: item.quantity,
+        };
+      }),
+    } as CreateOrUpdateShoppingCartRequest;
+    return this.http.post<GeneralResponse<string>>(
+      `${this.apiUrl}/orders/shopping-cart`,
+      saveShoppingCartRequest
+    );
   }
 
   // Clear entire cart
   clearCart(): void {
     this.cartItemsSignal.set([]);
     this.saveCartToStorage();
+    this.saveShoppingCart().subscribe();
   }
 
   // Get cart data

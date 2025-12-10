@@ -41,6 +41,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   accessToken: string;
   user: User;
+  shoppingCart: CartItem[];
 }
 
 export interface ForgotPasswordRequest {
@@ -149,6 +150,11 @@ export interface CartItem {
   product: Product;
   quantity: number;
   disabledInStock?: boolean;
+}
+
+export interface CreateOrUpdateShoppingCartRequest {
+  userId: number;
+  items: { productId: number; quantity: number }[];
 }
 
 export interface Cart {

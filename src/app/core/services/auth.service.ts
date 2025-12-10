@@ -1,8 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import {
   User,
   LoginRequest,
@@ -12,9 +11,9 @@ import {
   ResetPasswordRequest,
   UserRole,
   GeneralResponse,
+  CartItem,
 } from '../models/models';
 import { environment } from '../../../environments/environment';
-import { WishlistService } from './wishlist.service';
 
 @Injectable({
   providedIn: 'root',
@@ -31,7 +30,6 @@ export class AuthService {
 
   private apiUrl = environment.API_URL;
   private http = inject(HttpClient);
-  private router = inject(Router);
 
   constructor() {
     this.loadFromStorage();
@@ -46,6 +44,7 @@ export class AuthService {
           this.currentUserSignal.set(response.data.user);
           this.tokenSignal.set(response.data.accessToken);
           this.saveToStorage(response.data.user, response.data.accessToken);
+          this.updateShoppingCart(response.data.shoppingCart);
         })
       );
   }
@@ -62,7 +61,8 @@ export class AuthService {
         this.currentUserSignal.set(null);
         this.tokenSignal.set(null);
         this.removeLocalStorage();
-        this.router.navigate(['/']);
+        localStorage.removeItem('shopping_cart');
+        window.location.href = '/';
       })
     );
   }
@@ -118,6 +118,14 @@ export class AuthService {
       } catch (e) {
         console.error('Error loading user from storage', e);
       }
+    }
+  }
+
+  private updateShoppingCart(cartItems: CartItem[]): void {
+    const getShoppingCart = localStorage.getItem('shopping_cart');
+
+    if (getShoppingCart == null) {
+      localStorage.setItem('shopping_cart', JSON.stringify(cartItems));
     }
   }
 
