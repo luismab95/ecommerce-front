@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { LoginRequest } from '../../../core/models/models';
+import { WishlistService } from '../../../core/services/wishlist.service';
 
 @Component({
   selector: 'app-login',
@@ -19,6 +20,7 @@ export class LoginComponent {
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private wishlistService = inject(WishlistService);
   private router = inject(Router);
   public modalService = inject(AuthModalService);
 
@@ -66,7 +68,8 @@ export class LoginComponent {
           if (response.data.user.role === 'Administrador') {
             this.router.navigate(['/admin']);
           } else {
-            window.location.reload();
+            this.wishlistService.getWishlist(response.data.user.id).subscribe();
+            this.router.navigate(['/']);
           }
         },
       });
