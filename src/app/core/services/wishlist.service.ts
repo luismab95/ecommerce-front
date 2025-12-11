@@ -18,10 +18,6 @@ export class WishlistService {
   wishlist = this.productsInWishlist.asReadonly();
   totalItems = computed(() => this.productsInWishlist().length);
 
-  constructor() {
-    this.clearWishlist();
-  }
-
   // Get wishlist
   getWishlist(userId: number): Observable<GeneralResponse<Product[]>> {
     return this.http

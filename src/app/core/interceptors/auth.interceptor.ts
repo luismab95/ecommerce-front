@@ -27,7 +27,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       // Handle 401 errors with token refresh
-      if (error.status === 401 && authService.isAuthenticated()) {
+      if (error.status === 401) {
         return handle401Error(authReq, next, authService, notificationService, router);
       }
 
@@ -59,7 +59,7 @@ function handle401Error(
     return authService.refreshToken().pipe(
       switchMap((response): Observable<HttpEvent<unknown>> => {
         isRefreshing = false;
-        const newToken = response.data;
+        const newToken = response.data.accessToken;
         refreshTokenSubject.next(newToken);
 
         // Retry the original request with the new token
@@ -74,8 +74,7 @@ function handle401Error(
           'Sesión expirada. Por favor, inicia sesión nuevamente.',
           5000
         );
-        authService.removeLocalStorage();
-        window.location.reload();
+        router.navigate(['/']);
         return throwError(() => refreshError);
       })
     );
