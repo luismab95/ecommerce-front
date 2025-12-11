@@ -1,4 +1,4 @@
-import { Component, input, output, inject, signal, OnInit } from '@angular/core';
+import { Component, input, output, inject, signal, effect } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Product, User } from '../../../core/models/models';
@@ -12,7 +12,7 @@ import { CartService } from '../../../core/services/cart.service';
   templateUrl: './product-card.html',
   imports: [RouterLink],
 })
-export class ProductCardComponent implements OnInit {
+export class ProductCardComponent {
   // Services
   cartService = inject(CartService);
   private wishlistService = inject(WishlistService);
@@ -29,8 +29,13 @@ export class ProductCardComponent implements OnInit {
   addToCartClick = output<Product>();
   viewDetailsClick = output<Product>();
 
-  ngOnInit(): void {
-    this.currentUser.set(this.authService.currentUser());
+  constructor() {
+    effect(() => {
+      const isAuthenticated = this.authService.isAuthenticated();
+      if (isAuthenticated) {
+        this.currentUser.set(this.authService.currentUser());
+      }
+    });
   }
 
   onAddToCart(event: Event) {
